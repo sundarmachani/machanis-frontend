@@ -127,17 +127,15 @@ const ProductDetails = () => {
 
     try {
       const response = await addToCart(id, 1);
-    
-      if (response.status === 401) {
-        toast.error("Only logged-in users can add items to the cart.");
-        return;
-      }
-    
-      if (response.ok) {
+      if (response) {
         setProduct((prev) => ({ ...prev, stock: prev.stock - 1 }));
         toast.success("Product added to cart!");
+      } else if (response === null) {
+        toast.error("Only logged-in users can add items to the cart.");
+        return;
       } else {
         toast.error("Failed to add product to cart.");
+        return;
       }
     } catch (err) {
       toast.error("An error occurred. Try again.");
