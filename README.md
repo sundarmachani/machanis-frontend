@@ -2,7 +2,7 @@
 
 Machani's is a full-stack **eCommerce application** built using the **MERN stack** (MongoDB, Express.js, React, Node.js). The project supports **product management, user authentication, shopping cart functionality, order processing, and payment integration using Stripe**.
 
-Wanna try it? [click me](https://machanis-frontend.vercel.app/)
+Wanna try it? [click me](https://machanis.vercel.app/)
 
 ## 🚀 Features
 
