@@ -227,7 +227,11 @@ Pull requests are welcome! Feel free to fork and submit PRs.
 ---
 
 ## 👨‍💻 Author
-**Machani's eCommerce** - Built with ❤️ by [Sundar Machani](https://github.com/sundarmachani)
+**Machani's eCommerce** - Built with ❤️ by [Sundar Machani](https://github.com/sundarmachani)  
+
+> **Note:** If the page or products take time to load, it's likely because the backend server is in sleep mode. It should wake up within a minute.  
+
+---
 
 ✅ **This file includes:**
 - **Setup Instructions**
