@@ -1,39 +1,16 @@
-import { useEffect, useState } from "react";
-import { fetchCart } from "../api/apiServices";
-import { startCheckout } from "../api/apiServices";
+import { useState } from "react";
+import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { startCheckout } from "../api/apiServices";
 
 const Checkout = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [cart, setCart] = useState({ items: [] });
-  const [totalAmount, setTotalAmount] = useState(0);
+  const items = useSelector((state) => state.cart.items);
+  const totalAmount = useSelector((state) => state.cart.totalAmount);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
-  useEffect(() => {
-    if (!user) return; // Prevent API call if user is not logged in
-
-    const getCart = async () => {
-      try {
-        const data = await fetchCart();
-        if (!data || !data.items) throw new Error("Invalid cart data");
-
-        setCart(data);
-        setTotalAmount(
-          data.items.reduce(
-            (acc, item) => acc + (item.productId?.price || 0) * item.quantity,
-            0
-          )
-        );
-      } catch (err) {
-        setError("Failed to load cart items.");
-      }
-    };
-
-    getCart();
-  }, [user]);
 
   const handlePayment = async () => {
     if (!user) {
@@ -45,7 +22,7 @@ const Checkout = () => {
     setError("");
 
     try {
-      const validItems = cart.items.map((item) => ({
+      const validItems = items.map((item) => ({
         productId: item.productId?._id,
         name: item.productId?.name || "Unknown",
         price: Number(item.productId?.price),
@@ -57,12 +34,9 @@ const Checkout = () => {
         throw new Error("Invalid cart items. Please refresh your cart.");
       }
 
-      // Ensure user._id is passed in the request
       const paymentUrl = await startCheckout(validItems, user?.id);
-
       if (paymentUrl) {
-        sessionStorage.setItem("cart", JSON.stringify([])); // Clear cart in session storage
-        setCart({ items: [] });
+        sessionStorage.setItem("cart", JSON.stringify([])); // Optional
         window.location.href = paymentUrl;
       } else {
         throw new Error("Payment failed. Try again.");
@@ -102,7 +76,7 @@ const Checkout = () => {
 
         {error && <p className="text-red-500 text-center mb-4">{error}</p>}
 
-        {cart.items.length === 0 ? (
+        {items.length === 0 ? (
           <p className="text-center text-[#9ca3af] text-lg">
             Your cart is empty.
           </p>
@@ -112,13 +86,12 @@ const Checkout = () => {
               Order Summary
             </h3>
 
-            {cart.items.map((item) => (
+            {items.map((item) => (
               <div
                 key={item.productId?._id}
                 className="flex justify-between items-center mb-5 border-b border-[#4b5563] pb-5"
               >
                 <div className="flex items-center space-x-4">
-                  {/* Product Image */}
                   <img
                     src={
                       item.productId?.image || "https://via.placeholder.com/100"
@@ -145,9 +118,9 @@ const Checkout = () => {
 
             <button
               onClick={handlePayment}
-              disabled={cart.items.length === 0 || loading}
+              disabled={items.length === 0 || loading}
               className={`w-full py-4 mt-6 rounded-lg text-lg font-semibold transition ${
-                cart.items.length === 0 || loading
+                items.length === 0 || loading
                   ? "bg-gray-500 cursor-not-allowed"
                   : "bg-[#f97316] hover:bg-[#ea580c] text-white"
               }`}

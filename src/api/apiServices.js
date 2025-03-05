@@ -142,7 +142,7 @@ export const startCheckout = async (items, userId) => {
 // Confirm Payment After Redirect
 export const confirmPayment = async (sessionId) => {
   try {
-    const { data } = await API.post("/checkout/confirm-payment", { sessionId });    
+    const { data } = await API.post("/checkout/confirm-payment", { sessionId });
     return data;
   } catch (error) {
     handleApiError(error, "Error confirming payment");

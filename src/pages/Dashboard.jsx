@@ -1,33 +1,22 @@
-import { useEffect, useState } from "react";
-import { fetchOrders } from "../api/apiServices";
+import { useEffect } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { loadUserOrders } from "../store/orderSlice";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
 
 const Dashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const orders = useSelector((state) => state.orders.items);
+  const loading = useSelector((state) => state.orders.loading);
+  const error = useSelector((state) => state.orders.error);
+  const dispatch = useDispatch();
 
   useEffect(() => {
-    if (!user) return; // Prevent API call if user is not logged in
-
-    const getOrders = async () => {
-      try {
-        const data = await fetchOrders();
-        if (!data || !Array.isArray(data))
-          throw new Error("Invalid order data");
-        setOrders(data);
-      } catch (err) {
-        setError("Failed to load orders.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    getOrders();
-  }, [user]);
+    if (user) {
+      dispatch(loadUserOrders());
+    }
+  }, [user, dispatch]);
 
   const getStatusColor = (status) => {
     switch (status) {

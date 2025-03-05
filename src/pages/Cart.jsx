@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
-import { fetchCart, removeFromCart } from "../api/apiServices";
+import { useEffect } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { loadCart, removeItem, restoreItem } from "../store/cartSlice";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { toast } from "react-toastify";
@@ -8,136 +9,46 @@ import "react-toastify/dist/ReactToastify.css";
 const Cart = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [cart, setCart] = useState({ items: [] });
-  const [totalAmount, setTotalAmount] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const dispatch = useDispatch();
+  const items = useSelector((state) => state.cart.items);
+  const totalAmount = useSelector((state) => state.cart.totalAmount);
+  const loading = useSelector((state) => state.cart.loading);
+  const error = useSelector((state) => state.cart.error);
 
   useEffect(() => {
-    if (!user) return;
+    if (user) dispatch(loadCart());
+  }, [user, dispatch]);
 
-    const getCart = async () => {
-      setLoading(true);
-      setError("");
+  const handleRemove = (productId, productName) => {
+    const removedItem = items.find((item) => item.productId._id === productId);
+    dispatch(removeItem(productId));
 
-      try {
-        const data = await fetchCart();
-        if (!data || !Array.isArray(data.items))
-          throw new Error("Invalid cart data");
+    let undoClicked = false;
 
-        setCart(data);
-        setTotalAmount(
-          data.items.reduce(
-            (acc, item) => acc + (item.productId?.price || 0) * item.quantity,
-            0
-          )
-        );
-      } catch (err) {
-        setError("Failed to load cart items.");
-      } finally {
-        setLoading(false);
+    const undoToast = toast(
+      <div>
+        <p>🚀 "{productName}" removed from cart.</p>
+        <button
+          onClick={() => {
+            undoClicked = true;
+            clearTimeout(undoTimeout);
+            dispatch(restoreItem(removedItem));
+            toast.dismiss(undoToast);
+            toast.success(`"${productName}" has been restored.`);
+          }}
+          className="bg-green-500 text-white px-3 py-1 rounded ml-2 hover:bg-green-600 transition"
+        >
+          Undo
+        </button>
+      </div>,
+      { autoClose: 5000, closeOnClick: false }
+    );
+
+    const undoTimeout = setTimeout(() => {
+      if (!undoClicked) {
+        toast.success(`"${productName}" has been permanently removed.`);
       }
-    };
-
-    getCart();
-  }, [user]);
-
-  const handleRemove = async (productId, productName) => {
-    return new Promise((resolve) => {
-      const confirmToast = toast(
-        <div>
-          <p>
-            🛒 Are you sure you want to remove "{productName}" from your cart?
-          </p>
-          <div className="flex justify-end mt-2">
-            <button
-              onClick={() => {
-                toast.dismiss(confirmToast);
-                resolve(true);
-              }}
-              className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 transition"
-            >
-              Remove
-            </button>
-            <button
-              onClick={() => {
-                toast.dismiss(confirmToast);
-                resolve(false);
-              }}
-              className="bg-gray-600 text-white px-3 py-1 rounded ml-2 hover:bg-gray-700 transition"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>,
-        { autoClose: false, closeOnClick: false }
-      );
-    }).then(async (confirmDeletion) => {
-      if (!confirmDeletion) return;
-
-      const removedItem = cart.items.find(
-        (item) => item.productId._id === productId
-      );
-      setCart((prevCart) => ({
-        ...prevCart,
-        items: prevCart.items.filter(
-          (item) => item.productId._id !== productId
-        ),
-      }));
-
-      setTotalAmount(
-        (prevTotal) =>
-          prevTotal - removedItem.productId.price * removedItem.quantity
-      );
-
-      let undoClicked = false;
-
-      const undoToast = toast(
-        <div>
-          <p>🚀 "{productName}" removed from cart.</p>
-          <button
-            onClick={() => {
-              undoClicked = true;
-              clearTimeout(undoTimeout);
-              toast.dismiss(undoToast);
-              setCart((prevCart) => ({
-                ...prevCart,
-                items: [...prevCart.items, removedItem],
-              }));
-              setTotalAmount(
-                (prevTotal) =>
-                  prevTotal + removedItem.productId.price * removedItem.quantity
-              );
-              toast.success(`"${productName}" has been restored.`);
-            }}
-            className="bg-green-500 text-white px-3 py-1 rounded ml-2 hover:bg-green-600 transition"
-          >
-            Undo
-          </button>
-        </div>,
-        { autoClose: 5000, closeOnClick: false }
-      );
-
-      const undoTimeout = setTimeout(async () => {
-        if (undoClicked) return;
-
-        try {
-          await removeFromCart(productId);
-          const updatedCart = await fetchCart();
-          setCart(updatedCart);
-          setTotalAmount(
-            updatedCart.items.reduce(
-              (acc, item) => acc + (item.productId?.price || 0) * item.quantity,
-              0
-            )
-          );
-
-          toast.success(`"${productName}" has been permanently removed.`);
-        } catch (error) {
-          setError("Failed to remove item. Please try again.");
-        }
-      }, 5000); // 5 seconds before final deletion
-    });
+    }, 5000);
   };
 
   if (!user) {
@@ -168,14 +79,14 @@ const Cart = () => {
         {error && <p className="text-red-500 text-center mb-4">{error}</p>}
         {loading ? (
           <p className="text-center text-[#9ca3af]">Loading...</p>
-        ) : cart.items.length === 0 ? (
+        ) : items.length === 0 ? (
           <p className="text-center text-[#9ca3af] text-lg">
             Your cart is empty.
           </p>
         ) : (
           <>
             <div>
-              {cart.items.map((item) => (
+              {items.map((item) => (
                 <div
                   key={item.productId?._id}
                   className="flex justify-between items-center mb-6 border-b border-[#4b5563] pb-6"
@@ -226,13 +137,13 @@ const Cart = () => {
             {/* Checkout Button */}
             <div className="text-center mt-6">
               <button
-                onClick={() => cart.items.length > 0 && navigate("/checkout")}
+                onClick={() => items.length > 0 && navigate("/checkout")}
                 className={`w-full py-4 rounded-lg text-lg font-semibold transition ${
-                  cart.items.length === 0
+                  items.length === 0
                     ? "bg-gray-500 cursor-not-allowed"
                     : "bg-[#f97316] hover:bg-[#ea580c] text-white"
                 }`}
-                disabled={cart.items.length === 0}
+                disabled={items.length === 0}
               >
                 Proceed to Checkout
               </button>

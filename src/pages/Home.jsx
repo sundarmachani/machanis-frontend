@@ -1,26 +1,18 @@
-import { useEffect, useState } from "react";
-import { fetchProducts } from "../api/apiServices";
+import { useEffect } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { loadProducts } from "../store/productSlice";
 import { Link, useNavigate } from "react-router-dom";
 
 const Home = () => {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const products = useSelector((state) => state.products.items);
+  const loading = useSelector((state) => state.products.loading);
+  const error = useSelector((state) => state.products.error);
+  const dispatch = useDispatch();
   const navigate = useNavigate(); // Fix refresh issue
 
   useEffect(() => {
-    const getProducts = async () => {
-      try {
-        const data = await fetchProducts();
-        setProducts(data);
-      } catch (err) {
-        setError("Failed to load products.");
-      } finally {
-        setLoading(false);
-      }
-    };
-    getProducts();
-  }, []);
+    dispatch(loadProducts());
+  }, [dispatch]);
 
   return (
     <div className="min-h-screen flex flex-col items-center bg-[#242729] text-[#f5f5f5] py-10">

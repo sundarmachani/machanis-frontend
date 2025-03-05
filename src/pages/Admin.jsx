@@ -1,14 +1,15 @@
+/* eslint-disable no-unused-vars */
 import { useEffect, useState } from "react";
-import {
-  fetchProducts,
-  addProduct,
-  fetchAllOrders,
-  updateOrderStatus,
-  updateProduct,
-  fetchUser,
-} from "../api/apiServices";
+import { fetchUser } from "../api/apiServices";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
+import {
+  loadProducts,
+  createProduct,
+  editProduct,
+} from "../store/productSlice";
+import { loadAllOrders, setOrderStatus } from "../store/orderSlice";
 import API from "../api";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -16,8 +17,14 @@ import "react-toastify/dist/ReactToastify.css";
 const Admin = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [orders, setOrders] = useState([]);
-  const [products, setProducts] = useState([]);
+  const dispatch = useDispatch();
+
+  const products = useSelector((state) => state.products.items);
+  const orders = useSelector((state) => state.orders.items);
+  const loadingOrders = useSelector((state) => state.orders.loading);
+  const loadingProducts = useSelector((state) => state.products.loading);
+  const loading = loadingOrders || loadingProducts;
+
   const [newProduct, setNewProduct] = useState({
     name: "",
     price: "",
@@ -28,7 +35,6 @@ const Admin = () => {
   });
   const [imageFile, setImageFile] = useState(null);
   const [uploading, setUploading] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [editMode, setEditMode] = useState(false);
   const [editProductId, setEditProductId] = useState(null);
@@ -36,25 +42,13 @@ const Admin = () => {
 
   useEffect(() => {
     if (!user?.isAdmin) {
-      navigate("/"); // Redirect non-admin users
+      navigate("/");
       return;
     }
 
-    const loadAdminData = async () => {
-      try {
-        setLoading(true);
-        const ordersData = await fetchAllOrders();
-        const productsData = await fetchProducts();
-        setOrders(ordersData);
-        setProducts(productsData);
-      } catch (err) {
-        setError("Failed to load data.");
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadAdminData();
-  }, [user, navigate]);
+    dispatch(loadAllOrders());
+    dispatch(loadProducts());
+  }, [user, navigate, dispatch]);
 
   useEffect(() => {
     if (orders.length > 0) {
@@ -62,22 +56,32 @@ const Admin = () => {
     }
   }, [orders]);
 
-  const handleUpdateStatus = async (orderId, status) => {
-    try {
-      await updateOrderStatus(orderId, status);
-      setOrders((prevOrders) =>
-        prevOrders.map((order) =>
-          order._id === orderId ? { ...order, status } : order
-        )
-      );
+  const handleGetUsers = async (orders) => {
+    const uniqueUserIds = [...new Set(orders.map((order) => order.userId))];
+    const userMap = {};
 
-      toast.success(`Order ${orderId} marked as ${status}`, {
+    try {
+      await Promise.all(
+        uniqueUserIds.map(async (userId) => {
+          const user = await fetchUser(userId);
+          if (user) {
+            userMap[userId] = user;
+          }
+        })
+      );
+      setUserData(userMap);
+    } catch (err) {
+      toast.error("Failed to fetch user data.", {
         position: "top-right",
       });
-    } catch (error) {
-      console.error("Error updating order:", error);
-      toast.error("Failed to update order status", { position: "top-right" });
     }
+  };
+
+  const handleUpdateStatus = (orderId, status) => {
+    dispatch(setOrderStatus({ orderId, status }));
+    toast.success(`Order ${orderId} marked as ${status}`, {
+      position: "top-right",
+    });
   };
 
   const handleImageUpload = async () => {
@@ -133,21 +137,16 @@ const Admin = () => {
     }
 
     try {
-      let updatedProduct;
       if (editMode) {
-        updatedProduct = await updateProduct(editProductId, newProduct);
-        setProducts(
-          products.map((prod) =>
-            prod._id === editProductId ? updatedProduct : prod
-          )
-        );
+        dispatch(editProduct({ id: editProductId, data: newProduct }));
         toast.success("Product updated successfully!", {
           position: "top-right",
         });
       } else {
-        updatedProduct = await addProduct(newProduct);
-        setProducts([...products, updatedProduct]);
-        toast.success("Product added successfully!", { position: "top-right" });
+        dispatch(createProduct(newProduct));
+        toast.success("Product added successfully!", {
+          position: "top-right",
+        });
       }
 
       setNewProduct({
@@ -166,45 +165,6 @@ const Admin = () => {
       toast.error("Failed to add/update product. Try again.", {
         position: "top-right",
       });
-    }
-  };
-
-  // const handleEditProduct = (product) => {
-  //   setNewProduct(product);
-  //   setEditProductId(product._id);
-  //   setEditMode(true);
-  // };
-
-  // const handleDeleteProduct = async (productId) => {
-  //   if (!window.confirm("Are you sure you want to delete this product?"))
-  //     return;
-
-  //   try {
-  //     await deleteProduct(productId);
-  //     setProducts((prev) =>
-  //       prev.filter((product) => product._id !== productId)
-  //     );
-  //   } catch (error) {
-  //     console.error("Error deleting product:", error);
-  //   }
-  // };
-
-const handleGetUsers = async (orders) => {
-    const uniqueUserIds = [...new Set(orders.map((order) => order.userId))]; // Extract unique user IDs
-    const userMap = {};
-
-    try {
-      await Promise.all(
-        uniqueUserIds.map(async (userId) => {
-          const user = await fetchUser(userId);
-          if (user) {
-            userMap[userId] = user;
-          }
-        })
-      );
-      setUserData(userMap);
-    } catch (err) {
-      toast.error("Failed to fetch user data:", err, { position: "top-right"});
     }
   };
 
@@ -253,7 +213,8 @@ const handleGetUsers = async (orders) => {
                       Status: {order.status}
                     </p>
                     <p className="text-[#9ca3af] text-sm">
-                      User email: {userData[order.userId]?.email || "Fetching..."}
+                      User email:{" "}
+                      {userData[order.userId]?.email || "Fetching..."}
                     </p>
                     <p className="text-[#9ca3af] text-sm">
                       Session ID: {order.sessionId}

@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react";
 import { fetchUserProfile } from "../api/apiServices";
-import { useAuth } from "../context/AuthContext";
 
 const UserProfile = () => {
-  const { user } = useAuth();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -39,7 +37,9 @@ const UserProfile = () => {
           </p>
           <p className="text-lg font-semibold text-gray-300 mt-2">
             Role:{" "}
-            <span className={profile.isAdmin ? "text-green-400" : "text-blue-400"}>
+            <span
+              className={profile.isAdmin ? "text-green-400" : "text-blue-400"}
+            >
               {profile.isAdmin ? "Admin" : "User"}
             </span>
           </p>
