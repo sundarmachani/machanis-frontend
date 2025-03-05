@@ -163,10 +163,26 @@ export const fetchOrderBySession = async (sessionId) => {
 
 export const fetchUserProfile = async () => {
   try {
-    const { data } = await API.get("/user"); // Call API
+    const { data } = await API.get("/user");
     return data;
   } catch (error) {
     handleApiError(error, "Error fetching user profile");
+    return null;
+  }
+};
+
+export const fetchUser = async (userId) => {
+  try {
+    const response = await API.get(`/user/${userId}`, {
+      withCredentials: true, // Ensures authentication token is sent
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${localStorage.getItem("token")}`, // Ensure token is included
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching user:", error.response?.data || error.message);
     return null;
   }
 };

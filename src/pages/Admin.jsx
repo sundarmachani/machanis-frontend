@@ -5,6 +5,7 @@ import {
   fetchAllOrders,
   updateOrderStatus,
   updateProduct,
+  fetchUser,
 } from "../api/apiServices";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -31,6 +32,7 @@ const Admin = () => {
   const [error, setError] = useState("");
   const [editMode, setEditMode] = useState(false);
   const [editProductId, setEditProductId] = useState(null);
+  const [userData, setUserData] = useState({});
 
   useEffect(() => {
     if (!user?.isAdmin) {
@@ -53,6 +55,12 @@ const Admin = () => {
     };
     loadAdminData();
   }, [user, navigate]);
+
+  useEffect(() => {
+    if (orders.length > 0) {
+      handleGetUsers(orders);
+    }
+  }, [orders]);
 
   const handleUpdateStatus = async (orderId, status) => {
     try {
@@ -181,6 +189,25 @@ const Admin = () => {
   //   }
   // };
 
+const handleGetUsers = async (orders) => {
+    const uniqueUserIds = [...new Set(orders.map((order) => order.userId))]; // Extract unique user IDs
+    const userMap = {};
+
+    try {
+      await Promise.all(
+        uniqueUserIds.map(async (userId) => {
+          const user = await fetchUser(userId);
+          if (user) {
+            userMap[userId] = user;
+          }
+        })
+      );
+      setUserData(userMap);
+    } catch (err) {
+      toast.error("Failed to fetch user data:", err, { position: "top-right"});
+    }
+  };
+
   if (!user?.isAdmin) {
     return <p className="text-center text-[#9ca3af] text-lg">Redirecting...</p>;
   }
@@ -226,7 +253,7 @@ const Admin = () => {
                       Status: {order.status}
                     </p>
                     <p className="text-[#9ca3af] text-sm">
-                      User ID: {order.userId}
+                      User email: {userData[order.userId]?.email || "Fetching..."}
                     </p>
                     <p className="text-[#9ca3af] text-sm">
                       Session ID: {order.sessionId}
