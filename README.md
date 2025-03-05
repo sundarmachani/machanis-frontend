@@ -2,16 +2,18 @@
 
 Machani's is a full-stack **eCommerce application** built using the **MERN stack** (MongoDB, Express.js, React, Node.js). The project supports **product management, user authentication, shopping cart functionality, order processing, and payment integration using Stripe**.
 
+Wanna try it? [click me](https://machanis-frontend.vercel.app/)
+
 ## 🚀 Features
 
-- ✅ **User Authentication** - Register/Login with JWT authentication.
-- ✅ **Admin Dashboard** - Manage products, orders, and users.
-- ✅ **Product Management** - Add, edit, delete, and update product stock.
-- ✅ **Shopping Cart** - Add and remove products.
-- ✅ **Order Management** - Users can place and track orders.
-- ✅ **Payment Integration** - Secure checkout with **Stripe**.
-- ✅ **Stock Management** - Auto-decrease stock on purchase.
-- ✅ **Responsive UI** - Clean and modern **Tailwind CSS** design.
+- **User Authentication** - Register/Login with JWT authentication.
+- **Admin Dashboard** - Manage products, orders, and users.
+- **Product Management** - Add, edit, delete, and update product stock.
+- **Shopping Cart** - Add and remove products.
+- **Order Management** - Users can place and track orders.
+- **Payment Integration** - Secure checkout with **Stripe**.
+- **Stock Management** - Auto-decrease stock on purchase.
+- **Responsive UI** - Clean and modern **Tailwind CSS** design.
 
 ---
 
@@ -37,51 +39,56 @@ Machani's is a full-stack **eCommerce application** built using the **MERN stack
 
 ### 1️⃣ Clone the Repository
 ```sh
-git clone https://github.com/your-username/machanis-ecommerce.git
-cd machanis-ecommerce
+git clone https://github.com/sundarmachani/machanis-frontend.git
+
+git clone https://github.com/sundarmachani/machanis-backend.git
+
 ```
 
 ### 2️⃣ Install Dependencies
 #### 🔹 Backend (Server)
 ```sh
-cd server
+cd machanis-backend
 npm install
 ```
 
 #### 🔹 Frontend (Client)
 ```sh
-cd client
+cd machanis-frontend
 npm install
 ```
 
 ### 3️⃣ Environment Variables
-Create **`.env`** files in both the `server/` and `client/` directories.
+Create **`.env`** files in both the `machanis-backend/` and `machanis-frontend/` directories.
 
-#### 🔹 Backend (`server/.env`)
+#### 🔹 Backend (`machanis-backend/.env`)
 ```env
 PORT=8080
 MONGO_URI=your_mongodb_connection_string
 JWT_SECRET=your_jwt_secret_key
 STRIPE_SECRET_KEY=your_stripe_secret_key
-CLIENT_URL=http://localhost:5173
+CLIENT_URL="http://localhost:5173"
+CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
+CLOUDINARY_API_KEY=your_cloudinary_api_key
+CLOUDINARY_API_SECRET=your_cloudinary_api_key
 ```
 
 #### 🔹 Frontend (`client/.env`)
 ```env
 VITE_API_BASE_URL=http://localhost:8080/api
-VITE_STRIPE_PUBLIC_KEY=your_stripe_public_key
 ```
 
 ### 4️⃣ Start the Application
-#### 🚀 Start Backend
+#### Start Backend
 ```sh
-cd server
-npm start
+cd machanis-backend
+node server.js [or] npm start
+npm run dev #if using nodemon
 ```
 
-#### 🚀 Start Frontend
+#### Start Frontend
 ```sh
-cd client
+cd machanis-frontend
 npm run dev
 ```
 
@@ -133,7 +140,7 @@ npm run dev
 
 ```
 machanis-ecommerce/
-│── client/                 # Frontend (React)
+│── machanis-frontend/                 # Frontend (React)
 │   ├── src/
 │   │   ├── components/     # UI Components
 │   │   ├── pages/          # App Pages
@@ -146,7 +153,7 @@ machanis-ecommerce/
 │   ├── .env                # Frontend Environment Variables
 │   ├── vite.config.js      # Vite Config
 │
-│── server/                 # Backend (Express.js)
+│── machanis-backend/                 # Backend (Express.js)
 │   ├── models/             # Mongoose Models
 │   ├── routes/             # Express Routes
 │   ├── middleware/         # Auth Middleware
@@ -214,11 +221,6 @@ git push origin main
 
 ---
 
-## 📜 License
-This project is licensed under the **MIT License**.
-
----
-
 ## ❤️ Contributing
 Pull requests are welcome! Feel free to fork and submit PRs.
 
@@ -233,5 +235,3 @@ Pull requests are welcome! Feel free to fork and submit PRs.
 - **Troubleshooting**
 - **Deployment Guide**
 - **Future Enhancements**
-
-Let me know if you need modifications! 🚀
