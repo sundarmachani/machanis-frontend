@@ -18,6 +18,7 @@ const ProductDetails = () => {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [serverWakeUp, setServerWakeUp] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [imageFile, setImageFile] = useState(null);
   const [uploading, setUploading] = useState(false);
@@ -31,6 +32,7 @@ const ProductDetails = () => {
 
   useEffect(() => {
     const getProduct = async () => {
+      setServerWakeUp(true);
       try {
         const data = await fetchProductById(id);
         if (!data) throw new Error("Product not found");
@@ -47,6 +49,7 @@ const ProductDetails = () => {
         setError("Failed to load product details.");
       }
       setLoading(false);
+      setServerWakeUp(false);
     };
 
     getProduct();
@@ -142,7 +145,15 @@ const ProductDetails = () => {
     }
   };
 
-  if (loading) return <p className="text-center text-gray-400">Loading...</p>;
+  if (loading)
+    return (
+      <p className="text-center text-gray-400">
+        ⏳{" "}
+        {serverWakeUp
+          ? "The server is waking up, please wait..."
+          : "Loading..."}
+      </p>
+    );
   if (error) return <p className="text-center text-red-500">{error}</p>;
   if (!product)
     return <p className="text-center text-gray-400">Product not found.</p>;
